@@ -1,17 +1,18 @@
 import asyncio
 import colorsys
+from config_manager import ConfigManager
 from lights_controller import LightsController
 from screen_capture import ScreenCapture
 
 class LightningBolt:
-    ADDRESS = "BE:16:A7:00:03:51"
-    LED_CHAR_UUID = "0000fff3-0000-1000-8000-00805f9b34fb"
     INTERVAL = 0.15
     MONITOR = 1
 
-    def __init__(self):
+    def __init__(self, config_manager: ConfigManager):
+        self.config_manger = config_manager
+        self.device = self.config_manger.device
         self.screen = ScreenCapture(self.MONITOR)
-        self.lights = LightsController(self.ADDRESS, self.LED_CHAR_UUID)
+        self.lights = LightsController(self.device.address, self.device.char_uuid)
         self.prev_color: tuple[int,int,int] | None = None
 
     @staticmethod
@@ -54,5 +55,8 @@ class LightningBolt:
             await self.lights.disconnect()
 
 if __name__ == "__main__":
-    lightning_bolt = LightningBolt()
+    config_manager = ConfigManager()
+    config_manager.load()
+
+    lightning_bolt = LightningBolt(config_manager)
     asyncio.run(lightning_bolt.run())
