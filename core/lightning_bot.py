@@ -6,7 +6,7 @@ from services.config_manager import ConfigManager
 
 class LightningBolt:
     INTERVAL = 0.15
-    MONITOR = 2
+    MONITOR = 1
 
     def __init__(self, config_manager: ConfigManager):
         self.config_manager = config_manager
@@ -20,7 +20,7 @@ class LightningBolt:
             await self.lights.connect()
 
             while True:
-                r, g, b = self.screen.capture_color()
+                r, g, b = await asyncio.to_thread(self.screen.capture_color)
                 r, g, b = self.colors.boost_color(r, g, b)
 
                 if self.colors.color_changed((r, g, b), self.prev_color):

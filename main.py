@@ -12,9 +12,10 @@ async def lifespan(app: FastAPI):
 
     bolt = LightningBolt(config)
     app.state.bolt = bolt
-    asyncio.create_task(bolt.run())
+    task = asyncio.create_task(bolt.run())
     yield
 
+    task.cancel()
 
 app = FastAPI(title="LightningBolt", version="1.0.0", lifespan=lifespan)
 
