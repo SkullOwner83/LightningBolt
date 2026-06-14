@@ -1,4 +1,6 @@
-bleak=3.0.2
-mss=10.2.0
-Pillow=12.2.0
-colorthief=0.2.1
+bleak==3.0.2
+mss==10.2.0
+Pillow==12.2.0
+colorthief==0.2.1
+fastapi==0.137.0
+uvicorn==3.2.1

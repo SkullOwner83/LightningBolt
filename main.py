@@ -1,10 +1,22 @@
 import asyncio
+import uvicorn
+from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from core.lightning_bot import LightningBolt
 from services.config_manager import ConfigManager
 
-if __name__ == "__main__":
-    config_manager = ConfigManager()
-    config_manager.load()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    config = ConfigManager()
+    config.load()
 
-    lightning_bolt = LightningBolt(config_manager)
-    asyncio.run(lightning_bolt.run())
+    bolt = LightningBolt(config)
+    app.state.bolt = bolt
+    asyncio.create_task(bolt.run())
+    yield
+
+
+app = FastAPI(title="LightningBolt", version="1.0.0", lifespan=lifespan)
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=45678)
