@@ -13,6 +13,7 @@ class LightningBolt:
         self.screen = ScreenCapture(self.MONITOR)
         self.colors = ColorProcessor()
         self.prev_color: tuple[int,int,int] | None = None
+        
         self.lights: list[LightsController] = [
             LightsController(device)
             for device in config_manager.devices.values()
@@ -39,6 +40,7 @@ class LightningBolt:
 
                 await asyncio.sleep(self.INTERVAL)
         except KeyboardInterrupt:
-            print("Deteniendo programa...")
+            print("Stoping program...")
         finally:
-            await self.lights.disconnect()
+            for light in self.lights:
+                await light.disconnect()

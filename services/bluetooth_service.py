@@ -7,24 +7,20 @@ class BluetoothService:
 
         return [
             Device(
-                name=d.name or "Desconocido", 
+                name=d.name or "Unknown", 
                 address=d.address
             )
             for d in devices
-            #if d.name
         ]
     
-    async def explorer(self, address: str) -> dict:
-        services = {}
-
+    async def explore(self, address: str) -> str | None:
         async with BleakClient(address) as client:
-            for service in client.services:
-                services[service.uuid] = [
-                    {
-                        "uuid": char.uuid,
-                        "properties": char.properties
-                    }
-                    for char in service.characteristics
-                ]
+            char = (
+                char
+                for service in client.services
+                for char in service.characteristics
+                if 'write-without-response' in char.properties
 
-        return services
+            )
+
+        return next(char, None)

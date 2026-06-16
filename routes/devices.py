@@ -9,7 +9,7 @@ router = APIRouter(
     tags=["devices"]
 )
 
-@router.get("/", )
+@router.get("/", status_code=status.HTTP_200_OK)
 async def get_devices(request: Request):
     config: ConfigManager = request.app.state.config
     devices = list(config.devices.values())
@@ -18,12 +18,17 @@ async def get_devices(request: Request):
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def add_device(payload: Device, request: Request):
     config: ConfigManager = request.app.state.config
-    
+    bluetooth: BluetoothService = request.app.state.bluetooth
+    char_uuid = await bluetooth.explore(payload.address)
+
+    if not char_uuid:
+        raise HTTPException(status_code=400, detail="No se encontró característica escribible.")
+
     device = Device(
         key=str(uuid.uuid4()),
         name=payload.name,
         address=payload.address,
-        char_uuid=payload.char_uuid
+        char_uuid=char_uuid
     )
 
     config.add_device(device)
@@ -38,9 +43,3 @@ async def scan_devices(request: Request):
     scanner: BluetoothService = request.app.state.bluetooth
     devices = await scanner.scan()
     return devices
-
-@router.get("/explore", status_code=status.HTTP_200_OK)
-async def explore(address: str, request: Request):
-    explorer: BluetoothService = request.app.state.bluetooth
-    services = await explorer.explorer(address)
-    return services

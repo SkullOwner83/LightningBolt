@@ -4,6 +4,7 @@ from models.device import Device
 class LightsController:
     def __init__(self, device: Device):
         self.device = device
+        self.client = None
     
     @property
     def is_connected(self) -> bool:
