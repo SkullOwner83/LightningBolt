@@ -1,21 +1,24 @@
 import os
 import json
 from pathlib import Path
-from types import SimpleNamespace
 from models.device import Device
 
 class ConfigManager:
     CONFIG_PATH = Path(os.getenv('LOCALAPPDATA')) / "LightningBolt" / "settings.json"
 
     def __init__(self):
-        self.devices: dict[str, Device] = {}
+        self._devices: dict[str, Device] = {}
         self.load() 
+
+    @property
+    def devices(self) -> dict[str, Device]:
+        return self._devices.copy()
 
     def load(self, path: Path = None) -> None:
         path = self.CONFIG_PATH if path is None else path
 
         if not path.exists():
-            self.devices = {}
+            self._devices = {}
             self.save()
             return
 
@@ -23,7 +26,7 @@ class ConfigManager:
             try:
                 data: dict = json.load(file)
 
-                self.devices = {
+                self._devices = {
                     k: Device(**v) 
                     for k, v in data.get("devices",  {}).items()
                 }
@@ -46,5 +49,9 @@ class ConfigManager:
             json.dump(data, file, ensure_ascii=False, indent=4)
 
     def add_device(self, device: Device):
-        self.devices[device.address] = device
+        self._devices[device.key] = device
+        self.save()
+
+    def remove_device(self, key: str):
+        self._devices.pop(key, None)
         self.save()
