@@ -8,13 +8,12 @@ class ConfigManager:
 
     def __init__(self):
         self._devices: dict[str, Device] = {}
-        self.load() 
 
     @property
     def devices(self) -> dict[str, Device]:
         return self._devices.copy()
 
-    def load(self, path: Path = None) -> None:
+    def load(self, path: Path | None = None) -> None:
         path = self.CONFIG_PATH if path is None else path
 
         if not path.exists():
@@ -34,7 +33,7 @@ class ConfigManager:
                 raise ValueError("The file is not a valid format")
         
 
-    def save(self, path: Path = None) -> None:
+    def save(self, path: Path | None = None) -> None:
         path = self.CONFIG_PATH if path is None else path
         path.parent.mkdir(parents=True, exist_ok=True)
         
@@ -49,9 +48,12 @@ class ConfigManager:
             json.dump(data, file, ensure_ascii=False, indent=4)
 
     def add_device(self, device: Device):
-        self._devices[device.key] = device
+        self._devices[device.id] = device
         self.save()
 
     def remove_device(self, id: str):
+        if id not in self._devices:
+            raise ValueError("Device not found")
+
         self._devices.pop(id, None)
         self.save()

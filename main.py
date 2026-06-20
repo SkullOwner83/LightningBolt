@@ -18,12 +18,16 @@ async def lifespan(app: FastAPI):
     app.state.bolt = bolt
     app.state.config = config
     app.state.bluetooth = bluetooth
+    
     yield
-
     task.cancel()
 
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+
 app = FastAPI(title="LightningBolt", version="1.0.0", lifespan=lifespan)
-app.include_router(routes.router)
 app.include_router(devices.router)
 
 if __name__ == "__main__":

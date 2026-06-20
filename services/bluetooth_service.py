@@ -5,8 +5,12 @@ class BluetoothService:
     def __init__(self):
         self._last_scan: dict[str, str] = {}
 
-    def get_name(self, address: str) -> str | None:
+    async def get_name(self, address: str) -> str | None:
+        if address not in self._last_scan:
+            await self.scan()
+
         return self._last_scan.get(address)
+        
 
     async def scan(self) -> list[Device]:
         devices = await BleakScanner.discover()
@@ -22,7 +26,7 @@ class BluetoothService:
         
         return results
     
-    async def explore(self, address: str) -> str | None:
+    async def explore(self, address: str) -> dict | None:
         async with BleakClient(address) as client:
             services = {}
 
@@ -47,5 +51,6 @@ class BluetoothService:
 
             )
 
-        result = next(chars, None)
+            result = next(chars, None)
+
         return result.uuid if result else None

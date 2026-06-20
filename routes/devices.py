@@ -19,11 +19,21 @@ async def get_devices(request: Request):
 async def add_device(payload: Device, request: Request):
     config: ConfigManager = request.app.state.config
     bluetooth: BluetoothService = request.app.state.bluetooth
-    key = bluetooth.get_name(payload.address)
+    key = await bluetooth.get_name(payload.address)
     char_uuid = await bluetooth.get_uuid(payload.address)
 
+    if key is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Device not found"
+        )
+
+
     if not char_uuid:
-        raise HTTPException(status_code=400, detail="No se encontró característica escribible o el dispositivo no es compatible.")
+        raise HTTPException(
+            status_code=400, 
+            detail="Not founded writable feature or device is not support."
+        )
 
     device = Device(
         id=str(uuid.uuid4()),
@@ -34,10 +44,18 @@ async def add_device(payload: Device, request: Request):
     )
 
     config.add_device(device)
+    return device
 
-@router.delete("/{key}", status_code=status.HTTP_200_OK)
+@router.delete("/{id}", status_code=status.HTTP_200_OK)
 async def remove_device(id: str, request: Request):
-    config: ConfigManager = request.app.state.config
+    try:
+        config: ConfigManager = request.app.state.config
+    except ValueError as ex:
+        raise HTTPException(
+            status_code=404, 
+            detail=str(ex)
+        )
+
     config.remove_device(id)
 
 @router.get("/scan", status_code=status.HTTP_200_OK)

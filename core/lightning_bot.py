@@ -20,10 +20,16 @@ class LightningBolt:
         ]
 
     async def connect_lights(self) -> None:
-        await asyncio.gather(*[light.connect() for light in self.lights])
+        await asyncio.gather(
+            *[light.connect() for light in self.lights],
+            return_exceptions=True
+        )
 
     async def set_color_all(self, r: int, g: int , b: int) -> None:
-        await asyncio.gather(*[light.set_color(r, g, b) for light in self.lights])
+        await asyncio.gather(
+            *[light.set_color(r, g, b) for light in self.lights],
+            return_exceptions=True
+        )
 
     async def run(self) -> None:
         try:
@@ -39,8 +45,9 @@ class LightningBolt:
                     print(f"Color → R={r:3} G={g:3} B={b:3}")
 
                 await asyncio.sleep(self.INTERVAL)
-        except KeyboardInterrupt:
+        except asyncio.CancelledError:
             print("Stoping program...")
+            raise
         finally:
             for light in self.lights:
                 await light.disconnect()
