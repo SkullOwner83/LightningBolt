@@ -19,13 +19,15 @@ async def get_devices(request: Request):
 async def add_device(payload: Device, request: Request):
     config: ConfigManager = request.app.state.config
     bluetooth: BluetoothService = request.app.state.bluetooth
-    char_uuid = await bluetooth.explore(payload.address)
+    key = bluetooth.get_name(payload.address)
+    char_uuid = await bluetooth.get_uuid(payload.address)
 
     if not char_uuid:
-        raise HTTPException(status_code=400, detail="No se encontró característica escribible.")
+        raise HTTPException(status_code=400, detail="No se encontró característica escribible o el dispositivo no es compatible.")
 
     device = Device(
-        key=str(uuid.uuid4()),
+        id=str(uuid.uuid4()),
+        key=key,
         name=payload.name,
         address=payload.address,
         char_uuid=char_uuid
@@ -34,12 +36,18 @@ async def add_device(payload: Device, request: Request):
     config.add_device(device)
 
 @router.delete("/{key}", status_code=status.HTTP_200_OK)
-async def remove_device(key: str, request: Request):
+async def remove_device(id: str, request: Request):
     config: ConfigManager = request.app.state.config
-    config.remove_device(key)
+    config.remove_device(id)
 
 @router.get("/scan", status_code=status.HTTP_200_OK)
 async def scan_devices(request: Request):
     scanner: BluetoothService = request.app.state.bluetooth
     devices = await scanner.scan()
     return devices
+
+@router.get("/explore", status_code=status.HTTP_200_OK)
+async def explore_devices(address: str, request: Request):
+    scanner: BluetoothService = request.app.state.bluetooth
+    services = await scanner.explore(address)
+    return services

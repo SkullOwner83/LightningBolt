@@ -52,6 +52,6 @@ class ConfigManager:
         self._devices[device.key] = device
         self.save()
 
-    def remove_device(self, key: str):
-        self._devices.pop(key, None)
+    def remove_device(self, id: str):
+        self._devices.pop(id, None)
         self.save()

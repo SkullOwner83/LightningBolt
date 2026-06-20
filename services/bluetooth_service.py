@@ -2,20 +2,44 @@ from bleak import BleakClient, BleakScanner
 from models.device import Device
 
 class BluetoothService:
+    def __init__(self):
+        self._last_scan: dict[str, str] = {}
+
+    def get_name(self, address: str) -> str | None:
+        return self._last_scan.get(address)
+
     async def scan(self) -> list[Device]:
         devices = await BleakScanner.discover()
+        results = []
 
-        return [
-            Device(
-                name=d.name or "Unknown", 
+        for d in devices:
+            self._last_scan[d.address] = d.name
+
+            results.append(Device(
+                name=d.name or 'Unknown',
                 address=d.address
-            )
-            for d in devices
-        ]
+            ))
+        
+        return results
     
     async def explore(self, address: str) -> str | None:
         async with BleakClient(address) as client:
-            char = (
+            services = {}
+
+            for service in client.services:
+                services[service.uuid] = [
+                    {
+                        "uuid": char.uuid,
+                        "properties": char.properties
+                    }
+                    for char in service.characteristics
+                ]
+
+            return services
+    
+    async def get_uuid(self, address: str) -> str | None:
+        async with BleakClient(address) as client:
+            chars = (
                 char
                 for service in client.services
                 for char in service.characteristics
@@ -23,4 +47,5 @@ class BluetoothService:
 
             )
 
-        return next(char, None)
+        result = next(chars, None)
+        return result.uuid if result else None
