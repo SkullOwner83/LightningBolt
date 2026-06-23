@@ -48,6 +48,9 @@ class ConfigManager:
             json.dump(data, file, ensure_ascii=False, indent=4)
 
     def add_device(self, device: Device):
+        if any(d.address == device.address for d in self.devices.values()):
+            raise ValueError(f"Device with the address '{device.address}' already exists")
+
         self._devices[device.id] = device
         self.save()
 

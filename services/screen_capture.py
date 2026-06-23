@@ -8,7 +8,7 @@ class ScreenCapture:
         self.sct = mss.MSS()
         self.monitor = self.sct.monitors[monitor]
 
-    def capture_color(self) -> tuple[int, int, int]:
+    def capture_color(self) -> tuple[int, int, int] | None:
         monitor = self.monitor
         width = monitor["width"]
         height = monitor["height"]
@@ -20,14 +20,18 @@ class ScreenCapture:
             "height": int(height * 0.60),
         }
         
-        img = self.sct.grab(region)
-        image = Image.frombytes("RGB", img.size, img.bgra, "raw", "BGRX")
-        image = image.resize((150, 150))
+        try:
+            img = self.sct.grab(region)
+            image = Image.frombytes("RGB", img.size, img.bgra, "raw", "BGRX")
+            image = image.resize((150, 150))
 
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-        buffer.seek(0)
+            buffer = io.BytesIO()
+            image.save(buffer, format="PNG")
+            buffer.seek(0)
 
-        ct = ColorThief(buffer)
-        r, g, b = ct.get_color(quality=1)
-        return r, g, b
+            ct = ColorThief(buffer)
+        
+            r, g, b = ct.get_color(quality=1)
+            return r, g, b
+        except Exception:
+            return None

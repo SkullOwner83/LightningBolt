@@ -1,4 +1,5 @@
 import asyncio
+from models.device import Device
 from services.lights_controller import LightsController
 from services.screen_capture import ScreenCapture
 from services.color_processor import ColorProcessor
@@ -25,6 +26,21 @@ class LightningBolt:
             return_exceptions=True
         )
 
+    async def add_light(self, device: Device) -> None:
+        light = LightsController(device)
+        await light.connect()
+        self.lights.append(light)
+
+    async def remove_light(self, id: str) -> None:
+        light = next((l for l in self.lights if l.device.id == id), None)
+
+        if light is None:
+            raise ValueError(f"Device is not found")
+
+        await light.disconnect()
+        self.lights.remove(light)
+
+
     async def set_color_all(self, r: int, g: int , b: int) -> None:
         await asyncio.gather(
             *[light.set_color(r, g, b) for light in self.lights],
@@ -36,17 +52,19 @@ class LightningBolt:
             await self.connect_lights()
 
             while True:
-                r, g, b = await asyncio.to_thread(self.screen.capture_color)
-                r, g, b = self.colors.boost_color(r, g, b)
+                screen_color = await asyncio.to_thread(self.screen.capture_color)
+                
+                if screen_color is not None:
+                    r, g, b = screen_color
+                    r, g, b = self.colors.boost_color(r, g, b)
 
-                if self.colors.color_changed((r, g, b), self.prev_color):
-                    await self.set_color_all(r, g, b)
-                    self.prev_color = (r, g, b)
-                    print(f"Color → R={r:3} G={g:3} B={b:3}")
-
+                    if self.colors.color_changed((r, g, b), self.prev_color):
+                        await self.set_color_all(r, g, b)
+                        self.prev_color = (r, g, b)
+                        #print(f"Color → R={r:3} G={g:3} B={b:3}")
+                        
                 await asyncio.sleep(self.INTERVAL)
         except asyncio.CancelledError:
-            print("Stoping program...")
             raise
         finally:
             for light in self.lights:

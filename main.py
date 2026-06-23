@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from core.lightning_bot import LightningBolt
 from services.bluetooth_service import BluetoothService
 from services.config_manager import ConfigManager
-from routes import devices, routes
+from routes import devices
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     try:
         await task
     except asyncio.CancelledError:
-        pass
+        print("Stoping program...")
 
 app = FastAPI(title="LightningBolt", version="1.0.0", lifespan=lifespan)
 app.include_router(devices.router)
