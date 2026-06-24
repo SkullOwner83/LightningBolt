@@ -49,7 +49,7 @@ class LightningBolt:
 
     async def run(self) -> None:
         try:
-            await self.connect_lights()
+            asyncio.create_task(self.connect_lights())
 
             while True:
                 screen_color = await asyncio.to_thread(self.screen.capture_color)
